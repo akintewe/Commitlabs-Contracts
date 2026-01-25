@@ -125,10 +125,13 @@ fn u32_to_string(e: &Env, n: u32) -> String {
         String::from_str(e, "1000")
     }
 }
+/// Transfer assets from owner to contract
+/// Note: In test environment, this may fail if token contract is not set up
 fn transfer_assets(e: &Env, from: &Address, to: &Address, asset_address: &Address, amount: i128) {
     let token_client = token::Client::new(e, asset_address);
 
-    // Check balance first
+    // Check balance first - this will panic if token contract doesn't exist
+    // In tests, this means you need to set up a token contract
     let balance = token_client.balance(from);
     if balance < amount {
         log!(e, "Insufficient balance: {} < {}", balance, amount);
