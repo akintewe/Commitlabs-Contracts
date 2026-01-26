@@ -156,7 +156,7 @@ impl AttestationEngineContract {
             attestation_type: attestation_type.clone(),
             data,
             timestamp: e.ledger().timestamp(),
-            verified_by,
+            verified_by: verified_by.clone(),
             is_compliant: true, // Default to true, can be updated by logic
         };
         
@@ -175,8 +175,8 @@ impl AttestationEngineContract {
         
         // Emit attestation event
         e.events().publish(
-            (symbol_short!("attest"), commitment_id),
-            attestation_type
+            (symbol_short!("Attest"), commitment_id, verified_by),
+            (attestation_type, true, e.ledger().timestamp())
         );
     }
 
@@ -340,7 +340,7 @@ impl AttestationEngineContract {
         
         // 8. Emit FeeRecorded event
         e.events().publish(
-            (Symbol::new(&e, "FeeRecorded"), commitment_id),
+            (symbol_short!("FeeRec"), commitment_id),
             (fee_amount, e.ledger().timestamp())
         );
     }
@@ -455,7 +455,7 @@ impl AttestationEngineContract {
         
         // 11. Emit DrawdownRecorded event
         e.events().publish(
-            (Symbol::new(&e, "DrawdownRecorded"), commitment_id),
+            (symbol_short!("Drawdown"), commitment_id),
             (current_value, drawdown_percent, e.ledger().timestamp())
         );
     }
@@ -482,7 +482,7 @@ impl AttestationEngineContract {
         let commitment: Commitment = commitment_val.try_into_val(&e).unwrap();
         
         // Get all attestations
-        let attestations = Self::get_attestations(e.clone(), commitment_id);
+        let attestations = Self::get_attestations(e.clone(), commitment_id.clone());
         
         // Base score: 100
         let mut score: i32 = 100;
@@ -570,9 +570,14 @@ impl AttestationEngineContract {
             score = 100;
         }
         
+        // Emit compliance score update event
+        e.events().publish(
+            (symbol_short!("ScoreUpd"), commitment_id),
+            (score as u32, e.ledger().timestamp()),
+        );
+        
         score as u32
     }
 }
 
-#[cfg(test)]
 mod tests;
